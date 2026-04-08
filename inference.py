@@ -25,11 +25,16 @@ from server.case_data import load_case_definitions
 load_dotenv()
 
 
-LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME") or os.getenv("IMAGE_NAME")
-ENV_BASE_URL = os.getenv("ENV_BASE_URL")
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY") or os.getenv("OPENAI_API_KEY")
+# Required runtime configuration for evaluator inference.
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+# Optional when using EnvClient.from_docker_image().
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+
+# Optional local-development convenience for connecting to a running server.
+ENV_BASE_URL = os.getenv("ENV_BASE_URL")
 TASK_NAME = os.getenv("CLINICAL_TRIAL_TASK", "all")
 BENCHMARK = os.getenv("CLINICAL_TRIAL_BENCHMARK", "clinical_trial_eligibility_screener")
 MAX_STEPS = int(os.getenv("MAX_STEPS", "8"))
@@ -72,9 +77,9 @@ def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> No
 
 
 def require_api_key() -> str:
-    if not API_KEY:
-        raise RuntimeError("Missing HF_TOKEN, API_KEY, or OPENAI_API_KEY")
-    return API_KEY
+    if not HF_TOKEN:
+        raise RuntimeError("Missing HF_TOKEN")
+    return HF_TOKEN
 
 
 def extract_json_payload(text: str) -> dict[str, Any]:
@@ -225,7 +230,7 @@ async def connect_env() -> ClinicalTrialEligibilityScreenerEnv | HTTPEnvAdapter:
             return HTTPEnvAdapter(ENV_BASE_URL)
     if LOCAL_IMAGE_NAME:
         return await ClinicalTrialEligibilityScreenerEnv.from_docker_image(LOCAL_IMAGE_NAME)
-    raise RuntimeError("Set LOCAL_IMAGE_NAME/IMAGE_NAME or ENV_BASE_URL before running inference")
+    raise RuntimeError("Set LOCAL_IMAGE_NAME or ENV_BASE_URL before running inference")
 
 
 async def run_task(

@@ -112,11 +112,11 @@ Required environment variables:
 
 - `API_BASE_URL`
 - `MODEL_NAME`
-- `HF_TOKEN` or `OPENAI_API_KEY`
-- `LOCAL_IMAGE_NAME` or `IMAGE_NAME` when running against a local Docker image
+- `HF_TOKEN`
 
-Optional environment variable:
+Optional environment variables:
 
+- `LOCAL_IMAGE_NAME` when running against a local Docker image with `from_docker_image()`
 - `ENV_BASE_URL` to connect to an already-running environment instead of starting Docker
 
 Example:
