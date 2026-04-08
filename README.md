@@ -1,8 +1,8 @@
 ---
 title: Clinical Trial Eligibility Screener
-emoji: stethoscope
+emoji: 🩺
 colorFrom: blue
-colorTo: teal
+colorTo: green
 sdk: docker
 pinned: false
 app_port: 8000
