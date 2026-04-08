@@ -1,0 +1,44 @@
+[
+  {
+    "case_id": "easy_t2d_adult",
+    "difficulty": "easy",
+    "expected_decision": "ELIGIBLE",
+    "eligible": true,
+    "reasoning_tags": [
+      "adult_patient",
+      "has_type_2_diabetes",
+      "no_type_1_diabetes",
+      "not_pregnant"
+    ]
+  },
+  {
+    "case_id": "medium_ckd_exclusion",
+    "difficulty": "medium",
+    "expected_decision": "INELIGIBLE",
+    "eligible": false,
+    "reasoning_tags": [
+      "age_in_range",
+      "has_type_2_diabetes",
+      "hba1c_under_7",
+      "kidney_disease_history",
+      "creatinine_high"
+    ]
+  },
+  {
+    "case_id": "hard_drug_interaction",
+    "difficulty": "hard",
+    "expected_decision": "INELIGIBLE",
+    "eligible": false,
+    "reasoning_tags": [
+      "age_in_range",
+      "has_type_2_diabetes",
+      "hba1c_in_range",
+      "creatinine_within_limit",
+      "systolic_bp_within_limit",
+      "warfarin_interaction",
+      "cyp3a4_inhibitor_interaction",
+      "no_stage3_kidney_disease",
+      "no_recent_pancreatitis"
+    ]
+  }
+]

@@ -1,0 +1,222 @@
+[
+  {
+    "case_id": "easy_t2d_adult",
+    "difficulty": "easy",
+    "patient_profile": {
+      "patient_id": "PT-001",
+      "age": 52,
+      "gender": "female",
+      "conditions": [
+        "Type 2 diabetes mellitus",
+        "Hypertension"
+      ],
+      "icd10_codes": [
+        "E11.9",
+        "I10"
+      ],
+      "medications": [
+        "metformin",
+        "lisinopril"
+      ],
+      "lab_results": {
+        "creatinine_mg_dl": 0.9,
+        "hba1c_percent": 7.6,
+        "blood_pressure": {
+          "systolic": 132,
+          "diastolic": 80
+        }
+      }
+    },
+    "trial_protocol": {
+      "trial_id": "TRIAL-EASY-01",
+      "title": "Adult Type 2 Diabetes Screening Study",
+      "inclusion_criteria": [
+        "Age must be greater than 18 years.",
+        "Confirmed diagnosis of Type 2 diabetes mellitus."
+      ],
+      "exclusion_criteria": [
+        "History of Type 1 diabetes mellitus.",
+        "Current pregnancy."
+      ]
+    },
+    "record_segments": [
+      "Initial chart review: 52-year-old female presenting for diabetes follow-up.",
+      "Problem list: Type 2 diabetes mellitus (E11.9), hypertension (I10).",
+      "Medication list: metformin 1000 mg BID, lisinopril 20 mg daily.",
+      "Recent labs: HbA1c 7.6%, creatinine 0.9 mg/dL, BP 132/80."
+    ],
+    "criterion_sequence": [
+      "Check adult age threshold (>18).",
+      "Confirm Type 2 diabetes diagnosis.",
+      "Rule out Type 1 diabetes history.",
+      "Rule out pregnancy exclusion."
+    ],
+    "expected_decision": "ELIGIBLE",
+    "supporting_reasoning_tags": [
+      "adult_patient",
+      "has_type_2_diabetes",
+      "no_type_1_diabetes",
+      "not_pregnant"
+    ],
+    "supported_facts": [
+      "type_2_diabetes"
+    ],
+    "summary": "Easy case with straightforward adult Type 2 diabetes eligibility."
+  },
+  {
+    "case_id": "medium_ckd_exclusion",
+    "difficulty": "medium",
+    "patient_profile": {
+      "patient_id": "PT-014",
+      "age": 61,
+      "gender": "male",
+      "conditions": [
+        "Type 2 diabetes mellitus",
+        "Chronic kidney disease stage 3a",
+        "Hypertension"
+      ],
+      "icd10_codes": [
+        "E11.9",
+        "N18.31",
+        "I10"
+      ],
+      "medications": [
+        "metformin",
+        "empagliflozin",
+        "losartan"
+      ],
+      "lab_results": {
+        "creatinine_mg_dl": 1.7,
+        "hba1c_percent": 6.6,
+        "blood_pressure": {
+          "systolic": 136,
+          "diastolic": 84
+        }
+      }
+    },
+    "trial_protocol": {
+      "trial_id": "TRIAL-MED-02",
+      "title": "Tight Glycemic Control Trial",
+      "inclusion_criteria": [
+        "Age 18 to 75 years.",
+        "Confirmed Type 2 diabetes mellitus.",
+        "HbA1c less than 7.0%."
+      ],
+      "exclusion_criteria": [
+        "Any history of kidney disease.",
+        "Creatinine greater than 1.5 mg/dL."
+      ]
+    },
+    "record_segments": [
+      "Referral note: 61-year-old male referred for diabetes trial screening.",
+      "Problem list: Type 2 diabetes mellitus, chronic kidney disease stage 3a, hypertension.",
+      "Medication list: metformin, empagliflozin, losartan.",
+      "Most recent labs: HbA1c 6.6%, creatinine 1.7 mg/dL, BP 136/84."
+    ],
+    "criterion_sequence": [
+      "Verify age is within 18 to 75 years.",
+      "Verify Type 2 diabetes diagnosis.",
+      "Verify HbA1c is below 7.0%.",
+      "Check kidney disease exclusion.",
+      "Check creatinine exclusion threshold."
+    ],
+    "expected_decision": "INELIGIBLE",
+    "supporting_reasoning_tags": [
+      "age_in_range",
+      "has_type_2_diabetes",
+      "hba1c_under_7",
+      "kidney_disease_history",
+      "creatinine_high"
+    ],
+    "supported_facts": [
+      "kidney_disease",
+      "type_2_diabetes"
+    ],
+    "summary": "Medium case with favorable glycemic control but clear renal exclusions."
+  },
+  {
+    "case_id": "hard_drug_interaction",
+    "difficulty": "hard",
+    "patient_profile": {
+      "patient_id": "PT-033",
+      "age": 68,
+      "gender": "female",
+      "conditions": [
+        "Type 2 diabetes mellitus",
+        "Atrial fibrillation",
+        "Chronic kidney disease stage 2",
+        "Remote pancreatitis"
+      ],
+      "icd10_codes": [
+        "E11.9",
+        "I48.91",
+        "N18.2",
+        "Z87.19"
+      ],
+      "medications": [
+        "metformin",
+        "warfarin",
+        "clarithromycin",
+        "omeprazole"
+      ],
+      "lab_results": {
+        "creatinine_mg_dl": 1.4,
+        "hba1c_percent": 8.3,
+        "blood_pressure": {
+          "systolic": 148,
+          "diastolic": 86
+        }
+      }
+    },
+    "trial_protocol": {
+      "trial_id": "TRIAL-HARD-05",
+      "title": "Oral Metabolic Modulator Safety Trial",
+      "inclusion_criteria": [
+        "Age 40 to 70 years.",
+        "Confirmed Type 2 diabetes mellitus.",
+        "HbA1c between 7.0% and 9.0%.",
+        "Creatinine less than 1.5 mg/dL.",
+        "Systolic blood pressure less than 150 mmHg."
+      ],
+      "exclusion_criteria": [
+        "Current warfarin use.",
+        "Current strong CYP3A4 inhibitor use.",
+        "Kidney disease stage 3 or higher.",
+        "Pancreatitis within the last 12 months."
+      ]
+    },
+    "record_segments": [
+      "Screening summary: 68-year-old female with Type 2 diabetes under active treatment.",
+      "Comorbidities: atrial fibrillation, chronic kidney disease stage 2, remote pancreatitis 18 months ago.",
+      "Current medications: metformin, warfarin, clarithromycin, omeprazole.",
+      "Vitals and labs: HbA1c 8.3%, creatinine 1.4 mg/dL, BP 148/86.",
+      "Protocol note: warfarin and strong CYP3A4 inhibitors are disqualifying due to study drug interactions."
+    ],
+    "criterion_sequence": [
+      "Verify age is within 40 to 70 years.",
+      "Verify Type 2 diabetes diagnosis.",
+      "Verify HbA1c range requirement.",
+      "Verify renal function and blood pressure inclusion thresholds.",
+      "Check drug-drug interaction exclusions.",
+      "Check kidney disease stage and pancreatitis timing exclusions."
+    ],
+    "expected_decision": "INELIGIBLE",
+    "supporting_reasoning_tags": [
+      "age_in_range",
+      "has_type_2_diabetes",
+      "hba1c_in_range",
+      "creatinine_within_limit",
+      "systolic_bp_within_limit",
+      "warfarin_interaction",
+      "cyp3a4_inhibitor_interaction",
+      "no_stage3_kidney_disease",
+      "no_recent_pancreatitis"
+    ],
+    "supported_facts": [
+      "warfarin",
+      "clarithromycin",
+      "type_2_diabetes"
+    ],
+    "summary": "Hard case with mixed qualifying features but disqualifying drug interactions."
+  }
+]
