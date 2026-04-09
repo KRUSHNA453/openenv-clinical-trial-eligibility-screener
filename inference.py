@@ -28,7 +28,7 @@ load_dotenv()
 # Required runtime configuration for evaluator inference.
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
-HF_TOKEN = os.getenv("HF_TOKEN")
+HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY")
 
 # Optional when using EnvClient.from_docker_image().
 # `IMAGE_NAME` is kept as a compatibility alias because some validators export it.
@@ -99,6 +99,25 @@ def write_summary(output_path: Path, task_name: str, summaries: list[dict[str, A
         + "\n",
         encoding="utf-8",
     )
+
+
+def fail_run(
+    *,
+    case_ids: list[str],
+    task_name: str,
+    output_path: Path,
+    error: str,
+) -> None:
+    fallback_case_ids = case_ids or [task_name]
+    summaries: list[dict[str, Any]] = []
+    for case_id in fallback_case_ids:
+        log_start(task=case_id, env=BENCHMARK, model=MODEL_NAME)
+        log_step(step=0, action="init", reward=0.0, done=True, error=error)
+        log_end(success=False, steps=0, score=0.0, rewards=[])
+        summaries.append(
+            {"task": case_id, "success": False, "error": error, "score": 0.0, "rewards": []}
+        )
+    write_summary(output_path, task_name, summaries)
 
 
 def extract_json_payload(text: str) -> dict[str, Any]:
@@ -359,7 +378,12 @@ def resolve_case_ids(task_name: str) -> list[str]:
     if task_name == "all":
         return all_case_ids
     if task_name not in all_case_ids:
-        raise ValueError(f"Unknown task '{task_name}'. Available tasks: {', '.join(all_case_ids)}")
+        print(
+            f"[DEBUG] Unknown task '{task_name}', falling back to the full benchmark.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return all_case_ids
     return [task_name]
 
 
@@ -376,23 +400,17 @@ async def main() -> None:
         default=Path("artifacts") / "inference_summary.json",
         help="File path for a machine-readable summary",
     )
-    args = parser.parse_args()
-    case_ids = resolve_case_ids(args.task)
-
     try:
+        args = parser.parse_args()
+        case_ids = resolve_case_ids(args.task)
         client = OpenAI(base_url=API_BASE_URL, api_key=require_api_key())
         env = await connect_env()
     except Exception as exc:
         error = str(exc).replace("\n", " ")
-        for case_id in case_ids:
-            log_start(task=case_id, env=BENCHMARK, model=MODEL_NAME)
-            log_step(step=0, action="init", reward=0.0, done=True, error=error)
-            log_end(success=False, steps=0, score=0.0, rewards=[])
-        write_summary(
-            args.output,
-            args.task,
-            [{"task": case_id, "success": False, "error": error, "score": 0.0, "rewards": []} for case_id in case_ids],
-        )
+        task_name = locals().get("args").task if "args" in locals() else TASK_NAME
+        output_path = locals().get("args").output if "args" in locals() else Path("artifacts") / "inference_summary.json"
+        case_ids = locals().get("case_ids", [])
+        fail_run(case_ids=case_ids, task_name=task_name, output_path=output_path, error=error)
         print(f"[FATAL] Failed to initialize environment or client: {error}", file=sys.stderr)
         return
 
@@ -410,4 +428,14 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as exc:  # pragma: no cover - final safety net for validators
+        error = str(exc).replace("\n", " ")
+        fail_run(
+            case_ids=resolve_case_ids(TASK_NAME),
+            task_name=TASK_NAME,
+            output_path=Path("artifacts") / "inference_summary.json",
+            error=error,
+        )
+        print(f"[FATAL] Unhandled inference exception: {error}", file=sys.stderr, flush=True)

@@ -22,3 +22,10 @@ def test_image_name_alias_populates_local_image_name(monkeypatch) -> None:
 
     monkeypatch.delenv("IMAGE_NAME", raising=False)
     importlib.reload(inference_module)
+
+
+def test_unknown_task_falls_back_to_all_cases() -> None:
+    case_ids = inference_module.resolve_case_ids("validator-task-name")
+
+    assert len(case_ids) == 3
+    assert "easy_t2d_adult" in case_ids
