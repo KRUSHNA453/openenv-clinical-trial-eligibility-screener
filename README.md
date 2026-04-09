@@ -117,6 +117,7 @@ Required environment variables:
 Optional environment variables:
 
 - `LOCAL_IMAGE_NAME` when running against a local Docker image with `from_docker_image()`
+- `IMAGE_NAME` is also accepted as a compatibility alias for some validators
 - `ENV_BASE_URL` to connect to an already-running environment instead of starting Docker
 
 Example:

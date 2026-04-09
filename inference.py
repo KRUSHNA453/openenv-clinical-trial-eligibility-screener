@@ -31,7 +31,8 @@ MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 # Optional when using EnvClient.from_docker_image().
-LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+# `IMAGE_NAME` is kept as a compatibility alias because some validators export it.
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME") or os.getenv("IMAGE_NAME")
 
 # Optional local-development convenience for connecting to a running server.
 ENV_BASE_URL = os.getenv("ENV_BASE_URL")
@@ -80,6 +81,24 @@ def require_api_key() -> str:
     if not HF_TOKEN:
         raise RuntimeError("Missing HF_TOKEN")
     return HF_TOKEN
+
+
+def write_summary(output_path: Path, task_name: str, summaries: list[dict[str, Any]]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(
+            {
+                "benchmark": BENCHMARK,
+                "model": MODEL_NAME,
+                "api_base_url": API_BASE_URL,
+                "task": task_name,
+                "summaries": summaries,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def extract_json_payload(text: str) -> dict[str, Any]:
@@ -189,9 +208,16 @@ class HTTPEnvAdapter:
         self._client = httpx.AsyncClient(timeout=60.0)
 
     async def reset(self, **kwargs: Any) -> StepResult[ClinicalTrialObservation]:
-        response = await self._client.post(f"{self._base_url}/reset", json=kwargs)
-        response.raise_for_status()
-        payload = response.json()
+        for attempt in range(5):
+            try:
+                response = await self._client.post(f"{self._base_url}/reset", json=kwargs)
+                response.raise_for_status()
+                payload = response.json()
+                break
+            except httpx.RequestError:
+                if attempt == 4:
+                    raise
+                await asyncio.sleep(1.0)
         return StepResult(
             observation=ClinicalTrialObservation.model_validate(payload["observation"]),
             reward=payload.get("reward"),
@@ -249,7 +275,18 @@ async def run_task(
 
     log_start(task=case_id, env=BENCHMARK, model=MODEL_NAME)
 
-    result = await env.reset(case_id=case_id)
+    try:
+        result = await env.reset(case_id=case_id)
+    except Exception as exc:
+        error = str(exc).replace("\n", " ")
+        log_step(step=0, action="reset", reward=0.0, done=True, error=error)
+        log_end(success=False, steps=0, score=0.0, rewards=[])
+        return {
+            "task": case_id,
+            "success": False,
+            "error": error,
+        }
+
     try:
         observation = result.observation
         last_reward = 0.0
@@ -340,12 +377,28 @@ async def main() -> None:
         help="File path for a machine-readable summary",
     )
     args = parser.parse_args()
+    case_ids = resolve_case_ids(args.task)
 
-    client = OpenAI(base_url=API_BASE_URL, api_key=require_api_key())
-    summaries = []
-    env = await connect_env()
     try:
-        for case_id in resolve_case_ids(args.task):
+        client = OpenAI(base_url=API_BASE_URL, api_key=require_api_key())
+        env = await connect_env()
+    except Exception as exc:
+        error = str(exc).replace("\n", " ")
+        for case_id in case_ids:
+            log_start(task=case_id, env=BENCHMARK, model=MODEL_NAME)
+            log_step(step=0, action="init", reward=0.0, done=True, error=error)
+            log_end(success=False, steps=0, score=0.0, rewards=[])
+        write_summary(
+            args.output,
+            args.task,
+            [{"task": case_id, "success": False, "error": error, "score": 0.0, "rewards": []} for case_id in case_ids],
+        )
+        print(f"[FATAL] Failed to initialize environment or client: {error}", file=sys.stderr)
+        return
+
+    summaries = []
+    try:
+        for case_id in case_ids:
             summaries.append(await run_task(client, env, case_id))
     finally:
         try:
@@ -353,21 +406,7 @@ async def main() -> None:
         except Exception as exc:  # pragma: no cover - best effort cleanup
             print(f"[DEBUG] env.close() error (container cleanup): {exc}", file=sys.stderr, flush=True)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(
-            {
-                "benchmark": BENCHMARK,
-                "model": MODEL_NAME,
-                "api_base_url": API_BASE_URL,
-                "task": args.task,
-                "summaries": summaries,
-            },
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    write_summary(args.output, args.task, summaries)
 
 
 if __name__ == "__main__":
